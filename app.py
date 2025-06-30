@@ -1,27 +1,30 @@
 import streamlit as st
 import requests
 
-# Load secrets (You must set these in Streamlit Cloud > Settings > Secrets)
+# Load secrets
 API_KEY = st.secrets["API_KEY"]
 VOICE_ID = st.secrets["VOICE_ID"]
 
 # Streamlit UI
-st.set_page_config(page_title="Text to Speech AI", layout="centered")
-st.title("🔊 AI Voice Generator")
-text_input = st.text_area("Enter text to convert into speech:")
+st.set_page_config(page_title="AI Voice Generator")
+st.title("🔊 Text to Speech Generator")
+
+text_input = st.text_area("Enter your text:")
 
 if st.button("Convert to Speech"):
     if not text_input.strip():
-        st.warning("Please enter some text first.")
+        st.warning("Please enter some text.")
     else:
-        with st.spinner("Generating speech..."):
+        with st.spinner("Generating voice..."):
 
-            # Make API request to ElevenLabs
             url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
+
             headers = {
+                "accept": "audio/mpeg",
                 "xi-api-key": API_KEY,
                 "Content-Type": "application/json"
             }
+
             data = {
                 "text": text_input,
                 "model_id": "eleven_monolingual_v1",
@@ -31,15 +34,15 @@ if st.button("Convert to Speech"):
                 }
             }
 
-            response = requests.post(url, json=data, headers=headers)
+            response = requests.post(url, headers=headers, json=data)
 
             if response.status_code == 200:
                 # Save audio to file
-                audio_file_path = "output.mp3"
-                with open(audio_file_path, "wb") as f:
+                with open("output.mp3", "wb") as f:
                     f.write(response.content)
 
-                st.success("✅ Voice created successfully!")
-                st.audio(audio_file_path)
+                st.success("✅ Voice generated successfully!")
+                st.audio("output.mp3")
             else:
-                st.error(f"Failed to generate voice. Status code: {response.status_code}")
+                st.error(f"❌ Error {response.status_code}: Could not generate voice.")
+                st.text("Details:\n" + response.text)
